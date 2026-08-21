@@ -123,29 +123,55 @@ def apply_update_and_restart(new_exe_path: str):
     # только в значениях путей (которые Windows обработает через свою
     # текущую кодовую страницу), чтобы не ловить проблемы с кодировкой .bat.
     bat_content = f"""@echo off
-setlocal
+setlocal EnableDelayedExpansion
 set "NEWEXE={new_exe_path}"
 set "CUREXE={current_exe}"
 set "BACKUP={backup_path}"
+set "LOG={backup_path}.update_log.txt"
+set /a WAITED=0
+
+echo Ожидание завершения {exe_name}... > "%LOG%"
 
 :waitloop
 tasklist /FI "IMAGENAME eq {exe_name}" 2>NUL | find /I "{exe_name}" >NUL
 if "%ERRORLEVEL%"=="0" (
+    set /a WAITED+=1
+    if !WAITED! GEQ 30 (
+        echo Таймаут ожидания (30 сек) - процесс не завершился, пробую заменить файл принудительно. >> "%LOG%"
+        goto forceupdate
+    )
     timeout /t 1 /nobreak >NUL
     goto waitloop
 )
 
+:forceupdate
 if exist "%BACKUP%" del /F /Q "%BACKUP%"
-move /Y "%CUREXE%" "%BACKUP%" >NUL
-move /Y "%NEWEXE%" "%CUREXE%" >NUL
+move /Y "%CUREXE%" "%BACKUP%" >> "%LOG%" 2>&1
+if not exist "%CUREXE%" (
+    move /Y "%NEWEXE%" "%CUREXE%" >> "%LOG%" 2>&1
+    echo Файл обновлён успешно. >> "%LOG%"
+) else (
+    echo [ОШИБКА] Не удалось переименовать текущий exe (возможно, всё ещё занят). >> "%LOG%"
+    echo Обновление НЕ применено. Старая версия сохранена. >> "%LOG%"
+    move /Y "%BACKUP%" "%CUREXE%" >> "%LOG%" 2>&1
+    goto end
+)
 
 start "" "%CUREXE%"
-
 del /F /Q "%BACKUP%" >NUL 2>&1
+
+:end
 del /F /Q "%~f0"
 """
     with open(bat_path, "w", encoding="utf-8") as f:
         f.write(bat_content)
+
+    # Windows-переносы строк (CRLF) - важно для корректного разбора .bat
+    with open(bat_path, "rb") as f:
+        data = f.read()
+    data = data.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+    with open(bat_path, "wb") as f:
+        f.write(data)
 
     creationflags = 0
     if os.name == "nt":

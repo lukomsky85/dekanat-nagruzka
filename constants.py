@@ -3,13 +3,35 @@
 Централизованное хранилище неизменяемых значений проекта.
 """
 
+import sys
+from pathlib import Path
+
+
+def _read_version() -> str:
+    """Читает версию из файла VERSION рядом с приложением.
+    Работает и при запуске из исходников (python main.py), и из
+    собранного .exe (PyInstaller onefile, файл VERSION должен быть
+    подключён через --add-data в build.bat - см. комментарий там же)."""
+    if getattr(sys, "frozen", False):
+        base = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    else:
+        base = Path(__file__).parent
+    version_file = base / "VERSION"
+    try:
+        return version_file.read_text(encoding="utf-8").strip() or "0.0.0"
+    except Exception:
+        return "0.0.0"
+
+
 # ============================================================
 #  ИНФОРМАЦИЯ О ПРОЕКТЕ
 # ============================================================
 
-VERSION = "1.0.0"
+# Версия читается из файла VERSION (лежит рядом с этим файлом) - чтобы
+# поднять версию перед релизом, достаточно отредактировать один текстовый
+# файл, а не лезть в код. См. release.bat - он делает это автоматически.
+VERSION = _read_version()
 APP_NAME = "Учебная нагрузка преподавателя"
-ORG_NAME = "СЗИМТ - филиал СЗГМУ"  # Добавлено для окна "О программе"
 APP_YEAR = "2026"
 APP_FULL_NAME = f"{APP_NAME} — Деканат v{VERSION}"
 
@@ -24,10 +46,11 @@ TARGET_SYSTEM = "АС Нагрузка - ММИС"
 #  ПРОВЕРКА ОБНОВЛЕНИЙ
 # ============================================================
 
-# URL JSON-манифеста с текущей версией на сервере
+# URL JSON-манифеста с текущей версией на сервере, см. формат в updater.py.
 UPDATE_MANIFEST_URL = "https://lukomsky.ru/dekanat_nagruzka/version.json"
 
-# Проверять обновления автоматически при каждом запуске (тихо, без всплывающих окон, если обновлений нет)
+# Проверять обновления автоматически при каждом запуске (тихо, без
+# всплывающих окон, если обновлений нет или сервер недоступен)
 AUTO_CHECK_UPDATES_DEFAULT = True
 
 
@@ -41,18 +64,18 @@ ALL_GODY = "— Все годы —"
 
 
 # ============================================================
-#  РЕКВИЗИТЫ БЛАНКА ОТЧЁТА (ВЫМЫШЛЕННЫЕ ДАННЫЕ)
+#  РЕКВИЗИТЫ БЛАНКА ОТЧЁТА
 # ============================================================
 
 INSTITUTION_LINES = [
-    "СЕВЕРО-ЗАПАДНЫЙ ИНСТИТУТ МОРСКИХ ТЕХНОЛОГИЙ - ФИЛИАЛ",
+    "ОМСКИЙ ИНСТИТУТ ВОДНОГО ТРАНСПОРТА - ФИЛИАЛ",
     "ФЕДЕРАЛЬНОГО ГОСУДАРСТВЕННОГО БЮДЖЕТНОГО ОБРАЗОВАТЕЛЬНОГО УЧРЕЖДЕНИЯ ВЫСШЕГО ОБРАЗОВАНИЯ",
-    "«СЕВЕРО-ЗАПАДНЫЙ ГОСУДАРСТВЕННЫЙ МОРСКОЙ УНИВЕРСИТЕТ»",
+    "«СИБИРСКИЙ ГОСУДАРСТВЕННЫЙ УНИВЕРСИТЕТ ВОДНОГО ТРАНСПОРТА»",
 ]
 
-APPROVER_TITLE = "Проректор по\nучебной работе"
-APPROVER_NAME = "И.П. Соколов"
-UMO_NAME = "Петров В.М."
+APPROVER_TITLE = "Заместитель директора по\nстратегическому развитию"
+APPROVER_NAME = "Д.А. Токарев"
+UMO_NAME = "Никишкин А.С."
 
 
 # ============================================================
@@ -80,31 +103,21 @@ COL_WIDTHS = [6, 10, 8, 34, 9, 12, 10, 9, 9, 10, 10, 9, 9, 9, 10]
 # ============================================================
 
 DEFAULT_CONFIG = {
-    "server": r"SERVER01\SQLEXPRESS",
-    "database": "DekanatDB",
+    "server": r"DEKANAT100\SQLEXPRESS",
+    "database": "Деканат",
     "auth_type": "windows",
     "username": "",
     "password": "",
     "save_password": False,
     "window_geometry": "820x680",
     "use_network_folder": False,
-    "network_folder_path": r"\\fileserver\shared\reports",
+    "network_folder_path": r"\\server\reports",
     "local_folder_path": None,  # будет заполнено в config.py через APP_DIR
     "numbering": "original",
     "mode": "По семестрам (осенний + весенний)",
-    
-    # Настройки обновлений
-    "update_manifest_url": None,   # None -> будет использован UPDATE_MANIFEST_URL из этого файла
-    "auto_check_updates": AUTO_CHECK_UPDATES_DEFAULT,
-    
-    # Пресеты фильтров выборки данных
+    "update_manifest_url": None,   # None -> будет использован UPDATE_MANIFEST_URL из constants.py
+    "auto_check_updates": True,
     "query_templates": {},
-    
-    # Шаблоны печатной формы (по умолчанию берутся из констант выше, но могут быть переопределены в UI)
-    "template_institution_lines": "\n".join(INSTITUTION_LINES),
-    "template_approver_title": APPROVER_TITLE,
-    "template_approver_name": APPROVER_NAME,
-    "template_umo_name": UMO_NAME,
 }
 
 

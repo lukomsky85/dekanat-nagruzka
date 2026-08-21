@@ -36,7 +36,7 @@
 ```bash
 # 1. Клонируйте репозиторий
 git clone https://github.com/lukomsky85/dekanat-nagruzka.git
-cd teachers-workload
+cd dekanat-nagruzka
 
 # 2. Создайте и активируйте виртуальное окружение
 python -m venv venv

@@ -35,7 +35,7 @@
 
 ```bash
 # 1. Клонируйте репозиторий
-git clone https://github.com/lukomsky85/teachers-workload.git
+git clone https://github.com/lukomsky85/dekanat-nagruzka.git
 cd teachers-workload
 
 # 2. Создайте и активируйте виртуальное окружение
@@ -46,7 +46,7 @@ source venv/bin/activate  # Для Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # 4. Запустите приложение
-python teachers_report/main.py
+python dekanat-nagruzka/main.py
 
 # 5. (Опционально) Соберите standalone .exe файл
 # Используйте предоставленный скрипт сборки:
